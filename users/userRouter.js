@@ -6,12 +6,24 @@ const router = express.Router();
 
 router.use("/:id", validateUserId); 
 
-router.post('/', (req, res) => {
-  // do your magic!
+router.post('/', validateUser, (req, res) => {
+    userDB.insert(req.body)
+        .then(response => {
+            res.status(200).json({ response });
+        })
+        .catch(error => {
+            res.status(500).json({ message: "Could not post new user." });
+        })
 });
 
-router.post('/:id/posts', (req, res) => {
-  // do your magic!
+router.post('/:id/posts', validatePost, (req, res) => {
+    postDB.insert({...req.body, ["user_id"]: req.params.id })
+        .then(response => {
+            res.status(200).json({ response });
+        })
+        .catch(error => {
+            res.status(500).json({ message: "Unable to post new post." });
+        })
 });
 
 router.get('/', (req, res) => {
@@ -82,23 +94,23 @@ function validateUserId(req, res, next) {
 }
 
 function validateUser(req, res, next) {
-    if ( !req.body ) {
-        res.status(400).json({ message: "Missing user data." });
-    } else if ( !req.body.name ) {
-        res.status(400).json({ message: "Missing required name field." });
+    if( Object.keys(req.body).length !== 0 ) {
+        req.body.name ?
+            next()
+            : res.status(400).json({ message: "Missing name field." })
     } else {
-        next();
+        res.status(400).json({ message: "Missing user data." });
     }
 }
 
 function validatePost(req, res, next) {
-  if ( !req.body ) {
-      res.status(400).json({ message: "Missing user data." });
-  } else if ( !req.body.text ) {
-      res.status(400).json({ message: "Missing required name text." });
+  if( Object.keys(req.body).length !== 0 ) {
+      req.body.text ?
+          next()
+          : res.status(400).json({ message: "Missing text field." })
   } else {
-    next();
-  } 
+      res.status(400).json({ message: "Missing user data." });
+  }
 }
 
 module.exports = router;
